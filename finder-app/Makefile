@@ -1,7 +1,7 @@
 #check if CROSS_COMPILE is defined.
 
 ifdef CROSS_COMPILE 
-	CC = $(CROSS_COMPILE)gcc
+	CC = $(cross_compile)gcc
 else
 	CC = gcc 
 
