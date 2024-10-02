@@ -13,7 +13,31 @@ void* threadfunc(void* thread_param)
 
     // TODO: wait, obtain mutex, wait, release mutex as described by thread_data structure
     // hint: use a cast like the one below to obtain thread arguments from your parameter
-    //struct thread_data* thread_func_args = (struct thread_data *) thread_param;
+    
+    struct thread_data* thread_func_args = (struct thread_data *) thread_param;
+    
+    //wait to obtain
+    usleep(thread_func_args->wait_to_obtain); 
+    
+    //Obtain Mutex 
+    int rc = pthread_mutex_lock(thread_func_args->mutex); 
+    
+    if(rc != 0){
+    	ERROR_LOG("FAILED: Failure to lock mutex.");
+    	thread_func_args->thread_complete_success = false; 
+    }
+    
+    //wait to release
+    usleep(thread_func_args->wait_to_release); 
+    
+    //release mutex 
+    rc = pthread_mutex_unlock(thread_func_args->mutex);
+    if(rc != 0){
+    	ERROR_LOG("FAILED: Failure to unlock mutex.");
+    	thread_func_args->thread_complete_success = false; 
+    }
+    
+    thread_func_args->thread_complete_success = true; 
     return thread_param;
 }
 
@@ -28,6 +52,29 @@ bool start_thread_obtaining_mutex(pthread_t *thread, pthread_mutex_t *mutex,int 
      *
      * See implementation details in threading.h file comment block
      */
+     
+     // allocate memory for thread_data 
+     struct thread_data *thread_func_args = (struct thread_data *)malloc(sizeof(struct thread_data)); 
+     if(thread_func_args == NULL){ERROR_LOG("Memory allocation failed");}
+     
+     //set up mutex 
+    
+     thread_func_args->thread = thread; 
+     thread_func_args->mutex = mutex; 
+     thread_func_args->wait_to_obtain = wait_to_obtain_ms; 
+     thread_func_args->wait_to_release = wait_to_release_ms; 
+     thread_func_args->wait_to_release = false; 
+     
+     int rc = pthread_create(thread, NULL, threadfunc, (void*)thread_func_args); 
+     if(rc != 0){
+     	ERROR_LOG("Failed: Failure to create thread"); 
+     	return false; 
+     }else{
+        DEBUG_LOG("Thread created successfully."); 
+     	return true;
+     }
+     
+     
     return false;
 }
 
